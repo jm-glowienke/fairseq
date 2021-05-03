@@ -158,7 +158,7 @@ def set_incremental_state(
 def load_align_dict(replace_unk):
     if replace_unk is None:
         align_dict = None
-    elif isinstance(replace_unk, str) and len(replace_unk) > 0:
+    elif isinstance(replace_unk, str) and len(replace_unk) > 0 and '@@' not in replace_unk:
         # Load alignment dictionary for unknown word replacement if it was passed as an argument.
         align_dict = {}
         with open(replace_unk, "r") as f:
