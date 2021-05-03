@@ -205,6 +205,7 @@ def main(cfg: FairseqConfig):
     logger.info("Type the input sentence and press return:")
     start_id = 0
     for inputs in buffered_read(cfg.interactive.input, cfg.interactive.buffer_size):
+        # inputs remains list of length 1 in interactive use
         results = []
         for batch in make_batches(inputs, cfg, task, max_positions, encode_fn):
             bsz = batch.src_tokens.size(0)
@@ -271,6 +272,7 @@ def main(cfg: FairseqConfig):
                     tgt_dict=tgt_dict,
                     remove_bpe=cfg.common_eval.post_process,
                     extra_symbols_to_ignore=get_symbols_to_strip_from_output(generator),
+                    input_str=encode_fn(inputs[0]) # take str element from list
                 )
                 detok_hypo_str = decode_fn(hypo_str)
                 score = hypo["score"] / math.log(2)  # convert to base 2

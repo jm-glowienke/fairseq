@@ -158,7 +158,7 @@ def set_incremental_state(
 def load_align_dict(replace_unk):
     if replace_unk is None:
         align_dict = None
-    elif isinstance(replace_unk, str) and len(replace_unk) > 0:
+    elif isinstance(replace_unk, str) and len(replace_unk) > 0 and '@@' not in replace_unk:
         # Load alignment dictionary for unknown word replacement if it was passed as an argument.
         align_dict = {}
         with open(replace_unk, "r") as f:
@@ -209,7 +209,7 @@ def load_embedding(embed_dict, vocab, embedding):
     return embedding
 
 
-def replace_unk(hypo_str, src_str, alignment, align_dict, unk):
+def replace_unk(hypo_str, src_str, alignment, align_dict, unk, input_str):
     from fairseq import tokenizer
 
     # Tokens are strings here
@@ -218,9 +218,14 @@ def replace_unk(hypo_str, src_str, alignment, align_dict, unk):
     src_tokens = tokenizer.tokenize_line(src_str) + ["<eos>"]
     for i, ht in enumerate(hypo_tokens):
         if ht == unk:
-            src_token = src_tokens[alignment[i]]
+            src_idx, tgt_index = alignment[i]
+            src_token = src_tokens[src_idx]
             # Either take the corresponding value in the aligned dictionary or just copy the original value.
-            hypo_tokens[i] = align_dict.get(src_token, src_token)
+            hypo_tokens[i] = align_dict.get(src_token, src_token) # first value is searchd for, second is returned if not found
+            if hypo_tokens[i] == unk and input_str is not None:
+                input_tokens = tokenizer.tokenize_line(input_str) + ["<eos>"]
+                # replace unk token with corresponding word from raw input string
+                hypo_tokens[i] = input_tokens[src_idx]
     return " ".join(hypo_tokens)
 
 
@@ -232,14 +237,14 @@ def post_process_prediction(
     tgt_dict,
     remove_bpe=None,
     extra_symbols_to_ignore=None,
+    input_str=None
 ):
     hypo_str = tgt_dict.string(
         hypo_tokens, remove_bpe, extra_symbols_to_ignore=extra_symbols_to_ignore
     )
     if align_dict is not None:
-        hypo_str = replace_unk(
-            hypo_str, src_str, alignment, align_dict, tgt_dict.unk_string()
-        )
+        hypo_str = replace_unk(hypo_str, src_str, alignment, align_dict,
+                               tgt_dict.unk_string(), input_str)
     if align_dict is not None or remove_bpe is not None:
         # Convert back to tokens for evaluating with unk replacement or without BPE
         # Note that the dictionary can be modified inside the method.
