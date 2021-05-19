@@ -78,7 +78,15 @@ def main():
     args = parser.parse_args()
 
     with open(args.vocab, encoding="utf-8") as vocab:
-        vocabulary = vocab.read().splitlines()
+        vocabulary_with_numbers = vocab.read().splitlines()
+
+    vocabulary = []
+    for item in vocabulary_with_numbers:
+        if len(item.split(" ")) > 1:
+            # only split if dict contains words and counts
+            item = item.split(" ")[0].strip(" ")
+        vocabulary.append(item)
+
 
     target_in = (
         open(args.target, "r", encoding="utf-8") if args.target is not None else None
