@@ -91,3 +91,17 @@ def transformer_wmt_en_de_big_align(args):
     args.alignment_heads = getattr(args, "alignment_heads", 1)
     args.alignment_layer = getattr(args, "alignment_layer", 4)
     transformer_wmt_en_de_big(args)
+
+@register_model_architecture(
+    "transformer_align", "transformer_align_iwslt_de_en"
+)
+def transformer_align_iwslt_de_en(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 512)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 1024)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 4)
+    args.encoder_layers = getattr(args, "encoder_layers", 6)
+    args.decoder_embed_dim = getattr(args, "decoder_embed_dim", 512)
+    args.decoder_ffn_embed_dim = getattr(args, "decoder_ffn_embed_dim", 1024)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 4)
+    args.decoder_layers = getattr(args, "decoder_layers", 6)
+    transformer_align(args)
