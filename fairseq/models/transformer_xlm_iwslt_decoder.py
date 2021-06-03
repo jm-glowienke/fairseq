@@ -17,7 +17,7 @@ from fairseq.models.transformer import (
 )
 
 
-@register_model("transformer_from_pretrained_xlm")
+@register_model("transformer_xlm_iwslt_decoder")
 class TransformerFromPretrainedXLMModel(TransformerModel):
     @staticmethod
     def add_args(parser):
@@ -27,17 +27,20 @@ class TransformerFromPretrainedXLMModel(TransformerModel):
             "--pretrained-xlm-checkpoint",
             type=str,
             metavar="STR",
-            help="XLM model to use for initializing transformer encoder and/or decoder",
+            help="XLM model to use for initializing transformer encoder "
+                 "and/or decoder",
         )
         parser.add_argument(
             "--init-encoder-only",
             action="store_true",
-            help="if set, don't load the XLM weights and embeddings into decoder",
+            help="if set, don't load the XLM weights and embeddings into "
+                 "decoder",
         )
         parser.add_argument(
             "--init-decoder-only",
             action="store_true",
-            help="if set, don't load the XLM weights and embeddings into encoder",
+            help="if set, don't load the XLM weights and embeddings into "
+                 "encoder",
         )
 
     @classmethod
@@ -46,7 +49,8 @@ class TransformerFromPretrainedXLMModel(TransformerModel):
             "You must specify a path for --pretrained-xlm-checkpoint to use "
             "--arch transformer_from_pretrained_xlm"
         )
-        assert isinstance(task.source_dictionary, cls_dictionary) and isinstance(
+        assert isinstance(task.source_dictionary,
+                          cls_dictionary) and isinstance(
             task.target_dictionary, cls_dictionary
         ), (
             "You should use a MaskedLMDictionary when using --arch "
@@ -56,8 +60,8 @@ class TransformerFromPretrainedXLMModel(TransformerModel):
             "translation_from_pretrained_xlm"
         )
         assert not (
-            getattr(args, "init_encoder_only", False)
-            and getattr(args, "init_decoder_only", False)
+                getattr(args, "init_encoder_only", False)
+                and getattr(args, "init_decoder_only", False)
         ), "Only one of --init-encoder-only and --init-decoder-only can be set."
         return super().build_model(args, task)
 
@@ -71,7 +75,7 @@ class TransformerFromPretrainedXLMModel(TransformerModel):
 
 
 def upgrade_state_dict_with_xlm_weights(
-    state_dict: Dict[str, Any], pretrained_xlm_checkpoint: str
+        state_dict: Dict[str, Any], pretrained_xlm_checkpoint: str
 ) -> Dict[str, Any]:
     """
     Load XLM weights into a Transformer encoder or decoder model.
@@ -87,7 +91,8 @@ def upgrade_state_dict_with_xlm_weights(
             decoder and the pretrained_xlm_checkpoint
     """
     if not os.path.exists(pretrained_xlm_checkpoint):
-        raise IOError("Model file not found: {}".format(pretrained_xlm_checkpoint))
+        raise IOError(
+            "Model file not found: {}".format(pretrained_xlm_checkpoint))
 
     state = checkpoint_utils.load_checkpoint_to_cpu(pretrained_xlm_checkpoint)
     xlm_state_dict = state["model"]
@@ -95,13 +100,14 @@ def upgrade_state_dict_with_xlm_weights(
 
         for search_key in ["embed_tokens", "embed_positions", "layers"]:
             if search_key in key:
-                subkey = key[key.find(search_key) :]
+                subkey = key[key.find(search_key):]
                 assert subkey in state_dict, (
                     "{} Transformer encoder / decoder "
                     "state_dict does not contain {}. Cannot "
                     "load {} from pretrained XLM checkpoint "
                     "{} into Transformer.".format(
-                        str(state_dict.keys()), subkey, key, pretrained_xlm_checkpoint
+                        str(state_dict.keys()), subkey, key,
+                        pretrained_xlm_checkpoint
                     )
                 )
 
@@ -146,7 +152,7 @@ class TransformerDecoderFromPretrainedXLM(TransformerDecoder):
 
 
 @register_model_architecture(
-    "transformer_from_pretrained_xlm", "transformer_from_pretrained_xlm"
+    "transformer_xlm_iwslt_decoder", "transformer_xlm_iwslt_decoder"
 )
 def base_architecture(args):
     transformer_base_architecture(args)
