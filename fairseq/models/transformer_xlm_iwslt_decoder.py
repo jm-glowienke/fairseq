@@ -106,15 +106,19 @@ def upgrade_state_dict_with_xlm_weights(
         for search_key in ["embed_tokens", "embed_positions", "layers"]:
             if search_key in key:
                 subkey = key[key.find(search_key):]
-                assert subkey in state_dict, (
-                    "{} Transformer encoder / decoder "
-                    "state_dict does not contain {}. Cannot "
-                    "load {} from pretrained XLM checkpoint "
-                    "{} into Transformer.".format(
-                        str(state_dict.keys()), subkey, key,
-                        pretrained_xlm_checkpoint
+                if "in_proj_weight" in subkey or \
+                        "in_proj_bias" in subkey:
+                    continue
+                else:
+                    assert subkey in state_dict, (
+                        "{} \nTransformer encoder / decoder "
+                        "state_dict does not contain {}. \nCannot "
+                        "load {} from pretrained XLM checkpoint "
+                        "{} into Transformer.".format(
+                            str(state_dict.keys()), subkey, key,
+                            pretrained_xlm_checkpoint
+                        )
                     )
-                )
 
                 state_dict[subkey] = xlm_state_dict[key]
     return state_dict
@@ -159,6 +163,9 @@ class TransformerEncoderFromPretrainedXLM(TransformerEncoder):
 @register_model_architecture(
     "transformer_xlm_iwslt_decoder", "transformer_xlm_iwslt_decoder")
 def transformer_xlm_iwslt_decoder(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 3072)
+    args.encoder_layers = getattr(args, "encoder_layers", 12)
     args.decoder_embed_dim = getattr(args, "decoder_embed_dim", 512)
     args.decoder_ffn_embed_dim = getattr(args, "decoder_ffn_embed_dim", 1024)
     args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 4)
