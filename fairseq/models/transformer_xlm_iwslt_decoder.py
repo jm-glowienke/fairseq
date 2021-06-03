@@ -71,7 +71,12 @@ class TransformerFromPretrainedXLMModel(TransformerModel):
 
     @classmethod
     def build_decoder(cls, args, tgt_dict, embed_tokens):
-        return TransformerDecoderFromPretrainedXLM(args, tgt_dict, embed_tokens)
+        return TransformerDecoder(
+            args,
+            tgt_dict,
+            embed_tokens,
+            no_encoder_attn=getattr(args, "no_cross_attention", False),
+        )
 
 
 def upgrade_state_dict_with_xlm_weights(
@@ -133,26 +138,29 @@ class TransformerEncoderFromPretrainedXLM(TransformerEncoder):
         self.load_state_dict(xlm_loaded_state_dict, strict=True)
 
 
-class TransformerDecoderFromPretrainedXLM(TransformerDecoder):
-    def __init__(self, args, dictionary, embed_tokens, no_encoder_attn=False):
-        super().__init__(args, dictionary, embed_tokens, no_encoder_attn)
-        if getattr(args, "init_encoder_only", False):
-            # Don't load XLM weights for decoder if --init-encoder-only
-            return
-        assert hasattr(args, "pretrained_xlm_checkpoint"), (
-            "--pretrained-xlm-checkpoint must be specified to load Transformer "
-            "decoder from pretrained XLM"
-        )
-
-        xlm_loaded_state_dict = upgrade_state_dict_with_xlm_weights(
-            state_dict=self.state_dict(),
-            pretrained_xlm_checkpoint=args.pretrained_xlm_checkpoint,
-        )
-        self.load_state_dict(xlm_loaded_state_dict, strict=True)
+# class TransformerDecoderFromPretrainedXLM(TransformerDecoder):
+#     def __init__(self, args, dictionary, embed_tokens, no_encoder_attn=False):
+#         super().__init__(args, dictionary, embed_tokens, no_encoder_attn)
+#         if getattr(args, "init_encoder_only", False):
+#             # Don't load XLM weights for decoder if --init-encoder-only
+#             return
+#         assert hasattr(args, "pretrained_xlm_checkpoint"), (
+#             "--pretrained-xlm-checkpoint must be specified to load Transformer "
+#             "decoder from pretrained XLM"
+#         )
+#
+#         xlm_loaded_state_dict = upgrade_state_dict_with_xlm_weights(
+#             state_dict=self.state_dict(),
+#             pretrained_xlm_checkpoint=args.pretrained_xlm_checkpoint,
+#         )
+#         self.load_state_dict(xlm_loaded_state_dict, strict=True)
 
 
 @register_model_architecture(
-    "transformer_xlm_iwslt_decoder", "transformer_xlm_iwslt_decoder"
-)
-def base_architecture(args):
+    "transformer_xlm_iwslt_decoder", "transformer_xlm_iwslt_decoder")
+def transformer_xlm_iwslt_decoder(args):
+    args.decoder_embed_dim = getattr(args, "decoder_embed_dim", 512)
+    args.decoder_ffn_embed_dim = getattr(args, "decoder_ffn_embed_dim", 1024)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 4)
+    args.decoder_layers = getattr(args, "decoder_layers", 6)
     transformer_base_architecture(args)
