@@ -135,11 +135,12 @@ class TransformerEncoderFromPretrainedXLM(TransformerEncoder):
             "--pretrained-xlm-checkpoint must be specified to load Transformer "
             "encoder from pretrained XLM"
         )
-        xlm_loaded_state_dict = upgrade_state_dict_with_xlm_weights(
-            state_dict=self.state_dict(),
-            pretrained_xlm_checkpoint=args.pretrained_xlm_checkpoint,
-        )
-        self.load_state_dict(xlm_loaded_state_dict, strict=True)
+        if args.pretrained_xlm_checkpoint != 'interactive':
+            xlm_loaded_state_dict = upgrade_state_dict_with_xlm_weights(
+                state_dict=self.state_dict(),
+                pretrained_xlm_checkpoint=args.pretrained_xlm_checkpoint,
+            )
+            self.load_state_dict(xlm_loaded_state_dict, strict=True)
 
 
 # class TransformerDecoderFromPretrainedXLM(TransformerDecoder):
